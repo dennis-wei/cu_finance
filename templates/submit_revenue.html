@@ -1,0 +1,13 @@
+<!doctype html>
+<title> Submit Revenue </title>
+<h3> Submit Revenue </h3>
+
+{% from "_formhelpers.html" import render_field %}
+<form method=post action="/Submit">
+  <dl>
+    {{ render_field(form.program) }}
+    {{ render_field(form.description) }}
+    {{ render_field(form.amount) }}
+  </dl>
+  <p><input type=submit value=Submit>
+</form>

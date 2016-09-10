@@ -1,0 +1,13 @@
+<!doctype html>
+<title>Update {{ data['name'] }}</title>
+<h3> Current Data: </h3>
+<h3> {{ data }} </h3>
+
+{% from "_formhelpers.html" import render_field %}
+<form method=post action="/Submit">
+  <dl>
+    {{ render_field(form.budget) }}
+    {{ render_field(form.status) }}
+  </dl>
+  <p><input type=submit value=Submit>
+</form>

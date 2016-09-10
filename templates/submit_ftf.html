@@ -1,0 +1,18 @@
+<!doctype html>
+<title> Submit FTF </title>
+<h3> Submit an FTF </h3>
+
+{% from "_formhelpers.html" import render_field %}
+<form method=post action="/Submit">
+  <dl>
+    {{ render_field(form.name) }}
+    {{ render_field(form.program) }}
+    {{ render_field(form.location) }}
+    {{ render_field(form.event_date) }}
+    {{ render_field(form.estimated_attendance) }}
+    {{ render_field(form.description) }}
+    {{ render_field(form.vendor) }}
+    {{ render_field(form.amount) }}
+  </dl>
+  <p><input type=submit value=Submit>
+</form>

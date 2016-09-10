@@ -1,0 +1,11 @@
+<!doctype html>
+<title>New Initiative</title>
+
+{% from "_formhelpers.html" import render_field %}
+<form method=post action="/Submit">
+  <dl>
+    {{ render_field(form.name) }}
+    {{ render_field(form.budget) }}
+  </dl>
+  <p><input type=submit value=Submit>
+</form>
