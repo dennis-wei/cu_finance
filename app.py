@@ -11,7 +11,7 @@ from services.read_db import get_overall_data, get_initiative_data, \
                                 get_all_initiatives, get_ftf_data, \
                                 get_specific_ftf, get_revenue_data
 from services.update_db import approve_ftf, reject_ftf, update_ftf_receipt, \
-                                update_revenue_receipt, update_initiative, \
+                                update_revenue_receipt, update_initiative_data, \
                                 update_init_ftf
 from services.init_db import init_db
 
@@ -31,26 +31,10 @@ login_manager.init_app(app)
 def index():
     return render_template('index.html', data=get_overall_data())
 
-@app.route('/initiative')
-@app.route('/initiative/<initiative_name>/<update_name>', methods=['GET', 'POST'])
-def initiative(initiative_name=None, update_name=None):
-    if initiative_name == 'submit':
-        form = InitiativeForm()
-        if form.validate_on_submit():
-            initiative_name = enter_new_initiative(form)
-            return redirect(url_for('initiative', initiative_name=initiative_name))
-        return render_template('submit_initiative.html', form=form)
-    elif initiative_name == 'update':
-        if current_user.is_authenticated():
-            form = UpdateInitiativeForm()
-            if form.validate_on_submit():
-                update_initiative(form, update_name)
-                return redirect(url_for('initiative'), initiative_name=update_name)
-            return render_template('update_initiative.html', data=get_initiative_data(initiative_name), form=form)
-        else:
-            flash('You must be logged in to update an initiative')
-            return redirect(url_for('initiative'))
-    elif initiative_name == 'overall':
+@app.route('/initiatives')
+@app.route('/initiatives/<initiative_name>')
+def initiatives(initiative_name=None):
+    if initiative_name == 'overall':
         return redirect(url_for('index'))
     elif initiative_name:
         data = get_initiative_data(initiative_name)
@@ -61,22 +45,42 @@ def initiative(initiative_name=None, update_name=None):
     else:
         return render_template('all_initiatives.html', data=get_all_initiatives())
 
+@app.route('/initiatives/submit', methods=['GET', 'POST'])
+@login_required
+def submit_intiative():
+    form = InitiativeForm()
+    if form.validate_on_submit():
+        initiative_name = enter_new_initiative(form)
+        return redirect(url_for('initiatives', initiative_name=initiative_name))
+    return render_template('submit_initiative.html', form=form)
+
+@app.route('/initiatives/update/<initiative_name>', methods=['GET', 'POST'])
+@login_required
+def update_initiative(initiative_name=None):
+    form = UpdateInitiativeForm()
+    if form.validate_on_submit():
+        update_initiative_data(form, initiative_name)
+        return redirect(url_for('initiatives', initiative_name=initiative_name))
+    return render_template('update_initiative.html', data=get_initiative_data(initiative_name), form=form)
+
 @app.route('/ftf')
-@app.route('/ftf/<ftf_id>', methods=['GET', 'POST'])
+@app.route('/ftf/<ftf_id>')
 def ftf(ftf_id=None):
-    if ftf_id == 'submit':
-        form = FTFForm()
-        if form.validate_on_submit():
-            enter_new_ftf(form)
-            return redirect(url_for('ftf'))
-        return render_template('submit_ftf.html', form=form)
-    elif isinstance(ftf_id, int):
+    if ftf_id:
         return render_template('specific_ftf.html', data=get_specific_ftf(ftf_id))
     else:
         if current_user.is_authenticated:
             return render_template('admin_ftf.html', data=get_ftf_data())
         else:
             return render_template('ftf.html', data=get_ftf_data())
+
+@app.route('/ftf/submit', methods=['GET', 'POST'])
+def submit_ftf():
+    form = FTFForm()
+    if form.validate_on_submit():
+        ftf_id = enter_new_ftf(form)
+        return redirect(url_for('ftf', ftf_id=ftf_id))
+    return render_template('submit_ftf.html', form=form)
 
 @app.route('/revenue')
 def revenue():
@@ -85,13 +89,13 @@ def revenue():
     else:
         return render_template('revenue.html', data=get_revenue_data())
 
-@app.route('/submit_revenue', methods=['GET', 'POST'])
+@app.route('/revenue/submit', methods=['GET', 'POST'])
 @login_required
 def submit_revenue():
     form = RevenueForm()
     if form.validate_on_submit():
         initiative_name = enter_revenue(form)
-        return redirect(url_for(initiative), initiative_name=initiative_name)
+        return redirect(url_for('initiatives', initiative_name=initiative_name))
     return render_template('submit_revenue.html', form=form)
 
 ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'gif'])
@@ -159,7 +163,6 @@ def update_ftf_status(update='confirm', ftf_id=None):
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        print 'ok'
         user = User.query.get(form.email.data)
         if user.password == form.password.data:
             user.authenticated = True
@@ -185,7 +188,7 @@ def page_not_found(e):
 
 @login_manager.user_loader
 def user_loader(user_id):
-    return User.email
+    return User.query.filter_by(email=user_id).first()
 
 with app.app_context():
     init_db()

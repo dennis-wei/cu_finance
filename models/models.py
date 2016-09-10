@@ -66,6 +66,7 @@ class Revenue(db.Model):
     program = db.Column(String)
     description = db.Column(String)
     amount = db.Column(Numeric)
+    date = db.Column(Date)
     receipt_received = db.Column(Boolean)
 
     def __init__(self, program, description, amount):
@@ -87,11 +88,18 @@ class User(db.Model):
     password = db.Column(db.String)
     authenticated = db.Column(db.Boolean, default=False)
 
+    def __init__(self, email, password):
+        self.email = email
+        self.password = password
+
+    def __repr__(self):
+        return '<email {}>'.format(self.email)
+
     def is_active(self):
         return True
 
     def get_id(self):
-        return self.username
+        return self.email
 
     def is_authenticated(self):
         return self.authenticated

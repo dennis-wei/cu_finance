@@ -20,4 +20,7 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 SECRET_KEY = 'passwordgoeshere'
 WTF_CSRF_ENABLED = True
 
+USERNAME = 'admin@coreatcu.com'
+PASSWORD = 'admin'
+
 BASE_ALLOCATION = 3520.17

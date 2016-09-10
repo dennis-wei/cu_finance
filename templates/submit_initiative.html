@@ -2,10 +2,11 @@
 <title>New Initiative</title>
 
 {% from "_formhelpers.html" import render_field %}
-<form method=post action="/Submit">
+<form method=post action="">
+  {{ form.hidden_tag() }}
   <dl>
     {{ render_field(form.name) }}
-    {{ render_field(form.budget) }}
+    {{ render_field(form.base_budget) }}
   </dl>
   <p><input type=submit value=Submit>
 </form>

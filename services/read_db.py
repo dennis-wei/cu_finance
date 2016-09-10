@@ -4,16 +4,17 @@ import datetime as dt
 def get_overall_data():
     db_pull = Initiative.query.filter_by(name='overall').first()
     ret_dict = db_pull.__dict__.copy()
-    ret_dict.pop('name')
-    ret_dict['remaining_budget'] = _get_remaining_budget(ret_dict)
+    ret_dict['remaining_funds'] = _get_remaining_budget(ret_dict)
+
+    ret_dict['allocated_budget'] = _get_allocated_budget()
 
     app_ftf_list = FTF.query.filter_by(status='approved')
     ret_dict['past_7'] = _get_expenditure(app_ftf_list, 7)
     ret_dict['past_30'] = _get_expenditure(app_ftf_list, 30)
     ret_dict['past_90'] = _get_expenditure(app_ftf_list, 90)
 
-    # pending_ftf_count = db.session.query(func.count(FTF.id)).filter(FTF.status='pending')
-    # ret_dict['num_pending'] = pending_ftf
+    pending_ftf_count = db.session.query(FTF).filter_by(status='pending').count()
+    ret_dict['num_pending'] = pending_ftf_count
 
     most_recent_transactions = sorted(app_ftf_list, key=lambda f: f.event_date, reverse=True)[:5]
     ret_dict['most_recent_transactions'] = [
@@ -25,7 +26,7 @@ def get_overall_data():
 
 def get_initiative_data(initiative_name):
     db_pull = Initiative.query.filter_by(name=initiative_name).first()
-    ret_dict = db.pull__dict__.copy()
+    ret_dict = db_pull.__dict__.copy()
     ret_dict['remaining_budget'] = _get_remaining_budget(ret_dict)
 
     ftf_list = FTF.query.filter_by(program=initiative_name)
@@ -34,9 +35,8 @@ def get_initiative_data(initiative_name):
     return ret_dict
 
 def get_specific_ftf(ftf_id):
-    ftf = FTF.query.filter_by(id=ftf_id)
+    ftf = FTF.query.filter_by(id=ftf_id).first()
     ftf_dict = ftf.__dict__.copy()
-    ftf_dict.pop(id)
     return ftf_dict
 
 def get_ftf_data():
@@ -45,8 +45,8 @@ def get_ftf_data():
                     key=lambda f: f['event_date'], reverse=True)
 
 def get_all_initiatives():
-    active_list = Initiative.query.filter_by(name != 'overall', status='active')
-    inactive_list = Initiative.query.filter_by(status='inactive')
+    active_list = db.session.query(Initiative).filter_by(status='active').all()
+    inactive_list = Initiative.query.filter_by(status='inactive').all()
     ret_dict = {
         'active': [_pop_status(i.__dict__) for i in active_list],
         'inactive': [_pop_status(i.__dict__) for i in inactive_list]
@@ -56,7 +56,8 @@ def get_all_initiatives():
 def get_revenue_data():
     revenue_list = Revenue.query.all()
     rev_dict_list = [_pop_id_revenue(r) for r in revenue_list]
-    return sorted(rev_dict_list, key=lambda r: r.date, reverse=True)
+    print rev_dict_list
+    return sorted(rev_dict_list, key=lambda r: r['date'], reverse=True)
 
 def get_initiative_name_list():
     name_tuples = db.session.query(Initiative.name).all()
@@ -68,7 +69,8 @@ def _pop_status(init_dict):
     return copy_dict
 
 def _pop_id_revenue(rev):
-    ret_dict = rev.__dict__.copy().pop(receipt_received).pop(id)
+    ret_dict = rev.__dict__.copy()
+    ret_dict.pop('receipt_received')
     return ret_dict
 
 def _get_ftf_dict_data(ftf):
@@ -83,6 +85,10 @@ def _get_ftf_dict_data(ftf):
 
 def _get_remaining_budget(ret_dict):
     return ret_dict['base_budget'] + ret_dict['revenue'] - ret_dict['expended_budget']
+
+def _get_allocated_budget():
+    inits = db.session.query(Initiative).filter(Initiative.name!='overall')
+    return sum(i.base_budget for i in inits)
 
 def _get_expenditure(ftf_list, num_days):
     today = dt.date.today()

@@ -5,8 +5,10 @@ def approve_ftf(ftf_id):
     if ftf:
         ftf.status = 'approved_receipt_pending'
         return (ftf.program, ftf.amount)
+        update_initiative_expenditure(ftf.program, ftf.amount)
     else:
         return None
+    db.session.commit()
 
 def reject_ftf(ftf_id):
     ftf = FTF.query.filter_by(id=ftf_id).first()
@@ -15,6 +17,7 @@ def reject_ftf(ftf_id):
         return ftf.name
     else:
         return None
+    db.session.commit()
 
 def update_ftf_receipt(ftf_id):
     ftf = FTF.query.filter_by(id=ftf_id).first()
@@ -24,6 +27,7 @@ def update_ftf_receipt(ftf_id):
         return ftf.name
     else:
         return None
+    db.session.commit()
 
 def update_revenue_receipt(rev_id):
     rev = FTF.query.filter_by(id=rev_id).first()
@@ -32,17 +36,27 @@ def update_revenue_receipt(rev_id):
         return rev.program
     else:
         return None
+    db.session.commit()
 
-def update_initiative(form, init_name):
+def update_initiative_data(form, init_name):
     init = Initiative.query.filter_by(name=init_name).first()
     if init:
         budget = form.budget.data
+        print budget
         if budget:
-            init.total_budget = budget
+            init.base_budget = budget
         status = form.status.data
         if status:
             init.status = status
+    db.session.commit()
 
 def update_init_ftf(init_name, amt):
     init = Initiative.query.filter_by(name=init_name).first()
     init.expenditure += amt
+    db.session.commit()
+
+def update_initiative_expenditure(init_name, amt):
+    init = Initiative.query.filter_by(name=init_name).first()
+    init.expended_budget += amt
+    overall = Initiative.query.filter_by(name='overall').first()
+    overall.expended_budget += amt
