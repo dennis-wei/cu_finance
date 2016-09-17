@@ -1,5 +1,5 @@
 from flask_wtf import Form
-from wtforms import TextField, TextAreaField, DecimalField, IntegerField, SelectField, DateField, PasswordField
+from wtforms import TextField, TextAreaField, DecimalField, IntegerField, SelectField, DateField, PasswordField, FileField
 from wtforms.validators import DataRequired, Email, Optional
 
 from services.read_db import get_initiative_name_list
@@ -26,6 +26,7 @@ class RevenueForm(Form):
     program = TextField('Initiative', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
     amount = DecimalField('Transaction Amount', validators=[DataRequired()])
+    f = FileField('Receipt File', validators=[DataRequired()])
 
 class LoginForm(Form):
     email = TextField('Email', validators=[DataRequired(), Email()])
@@ -34,3 +35,6 @@ class LoginForm(Form):
 class UpdateInitiativeForm(Form):
     budget = DecimalField('Change Budget', validators=[Optional()])
     status = SelectField('Change Status', choices=[('active', 'Active'), ('inactive', 'Inactive')])
+
+class UploadForm(Form):
+    f = FileField()

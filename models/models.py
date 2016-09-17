@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Date, String, Integer, Boolean, Numeric
+from sqlalchemy import Date, String, Integer, Numeric
 
 import datetime as dt
 
@@ -38,7 +38,7 @@ class FTF(db.Model):
     description = db.Column(String)
     vendor = db.Column(String)
     amount = db.Column(Numeric)
-    receipt_received = db.Column(Boolean)
+    receipt_filename = db.Column(String)
     status = db.Column(String)
 
     def __init__(self, name, program, location, event_date, \
@@ -51,7 +51,7 @@ class FTF(db.Model):
         self.description = description
         self.vendor = vendor
         self.amount = amount
-        self.receipt_received = False
+        self.receipt_filename = None
         self.status = 'pending'
 
     def __repr__(self):
@@ -67,14 +67,14 @@ class Revenue(db.Model):
     description = db.Column(String)
     amount = db.Column(Numeric)
     date = db.Column(Date)
-    receipt_received = db.Column(Boolean)
+    receipt_filename = db.Column(String)
 
-    def __init__(self, program, description, amount):
+    def __init__(self, program, description, amount, filename):
         self.program = program
         self.description = description
         self.amount = amount
         self.date = dt.date.today()
-        self.receipt_received = False
+        self.receipt_filename = filename
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

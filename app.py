@@ -5,14 +5,13 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 
 from models.models import db, User, Revenue, FTF, Initiative
-from forms import InitiativeForm, FTFForm, RevenueForm, LoginForm, UpdateInitiativeForm
+from forms import InitiativeForm, FTFForm, RevenueForm, LoginForm, UpdateInitiativeForm, UploadForm
 from services.parse import enter_new_initiative, enter_new_ftf, enter_revenue
 from services.read_db import get_overall_data, get_initiative_data, \
                                 get_all_initiatives, get_ftf_data, \
                                 get_specific_ftf, get_revenue_data
 from services.update_db import approve_ftf, reject_ftf, update_ftf_receipt, \
-                                update_revenue_receipt, update_initiative_data, \
-                                update_init_ftf
+                                update_initiative_data, update_init_ftf
 from services.init_db import init_db
 
 app = Flask(__name__)
@@ -82,6 +81,36 @@ def submit_ftf():
         return redirect(url_for('ftf', ftf_id=ftf_id))
     return render_template('submit_ftf.html', form=form)
 
+@app.route('/ftf/upload_receipt/<ftf_id>', methods=['GET', 'POST'])
+def upload_ftf_receipt(ftf_id=None):
+    form = UploadForm()
+    if form.validate_on_submit():
+        filename = secure_filename(form.f.data.filename)
+        form.f.data.save(os.path.join(app.config['EXPEND_DIR'], filename))
+        update_ftf_receipt(ftf_id, filename)
+        return redirect(url_for('ftf', ftf_id=ftf_id))
+    return render_template('upload_receipt.html', form=form)
+
+@app.route('/ftf/update/<ftf_id>/<update>')
+@login_required
+def update_ftf_status(update='confirm', ftf_id=None):
+    if update == 'confirm' and ftf_id:
+        ftf_data = approve_ftf(ftf_id)
+        if ftf_data:
+            ftf_name = update_init_ftf(*ftf_data)
+            flash('Confirmed FTF: ' + ftf_name)
+            return redirect(url_for('ftf', ftf_id=ftf_id))
+        else:
+            flash('FTF not found')
+    elif update == 'reject' and ftf_id:
+        ftf_name = reject_ftf(ftf_id)
+        if ftf_name:
+            flash('Rejected FTF: ' + ftf_name)
+            return redirect(url_for('ftf', ftf_id=ftf_id))
+        else:
+            flash('FTF not found')
+    return redirect(url_for('ftf'))
+
 @app.route('/revenue')
 def revenue():
     if current_user.is_authenticated:
@@ -94,70 +123,12 @@ def revenue():
 def submit_revenue():
     form = RevenueForm()
     if form.validate_on_submit():
+        print type(form.f.data)
+        filename = secure_filename(form.f.data.filename)
+        form.f.data.save(os.path.join(app.config['REVEN_DIR'], filename))
         initiative_name = enter_revenue(form)
         return redirect(url_for('initiatives', initiative_name=initiative_name))
     return render_template('submit_revenue.html', form=form)
-
-ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg', 'gif'])
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
-@app.route('/upload_receipt/<source_type>/<source_id>', methods=['GET', 'POST'])
-def upload_receipt(source_type=None, source_id=None):
-    if source_type and source_id:
-        if request.method == 'POST':
-            # check if the post request has the file part
-            if 'file' not in request.files:
-                flash('No file part')
-                return redirect(request.url)
-            file = request.files['file']
-            # if user does not select file, browser also
-            # submit a empty part without filename
-            if file.filename == '':
-                flash('No selected file')
-                return redirect(request.url)
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                if source_type == 'ftf':
-                    success = update_ftf_receipt(source_id)
-                    if success:
-                        flash('Receipt successfully uploaded')
-                    else:
-                        flash('FTF not found')
-                    return redirect(url_for('ftf'))
-                elif source_type == 'revenue':
-                    success = update_revenue_receipt(source_id)
-                    if success:
-                        flash('Receipt successfully uploaded')
-                    else:
-                        flash('Revenue item not found')
-                return redirect(url_for('index'))
-        return render_template('upload_receipt.html')
-    else:
-        redirect(url_for('index'))
-
-@app.route('/ftf_status/<update>/<ftf_id>')
-@login_required
-def update_ftf_status(update='confirm', ftf_id=None):
-    if update == 'confirm' and ftf_id:
-        ftf_data = approve_ftf(ftf_id)
-        if ftf_data:
-            update_init_ftf(*ftf_data)
-            flash('Confirmed FTF: ' + ftf_name)
-            return redirect(url_for('ftf'), ftf_id=ftf_id)
-        else:
-            flash('FTF not found')
-    elif update == 'reject' and ftf_id:
-        ftf_name = reject_ftf(ftf_id)
-        if ftf_name:
-            flash('Rejected FTF: ' + ftf_name)
-            return redirect(url_for('ftf'), ftf_id=ftf_id)
-        else:
-            flash('FTF not found')
-    return redirect(url_for('ftf'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

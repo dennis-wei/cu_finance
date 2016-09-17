@@ -16,6 +16,8 @@ def enter_new_ftf(form):
 
 def enter_revenue(form):
     rev_dict = form.data
+    rev_dict.pop('f')
+    rev_dict['filename'] = form.f.data.filename
     rev = Revenue(**rev_dict)
     db.session.add(rev)
     update_initiative_revenue(form.program.data, form.amount.data)

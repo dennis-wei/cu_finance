@@ -56,7 +56,6 @@ def get_all_initiatives():
 def get_revenue_data():
     revenue_list = Revenue.query.all()
     rev_dict_list = [_pop_id_revenue(r) for r in revenue_list]
-    print rev_dict_list
     return sorted(rev_dict_list, key=lambda r: r['date'], reverse=True)
 
 def get_initiative_name_list():

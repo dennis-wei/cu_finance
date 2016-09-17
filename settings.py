@@ -2,6 +2,11 @@ import os
 
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
 
+BASE_DIR = os.path.dirname(__file__)
+DATA_DIR = os.getenv('DATA_DIR', os.path.join(BASE_DIR, "data"))
+EXPEND_DIR = os.getenv('EXPEND_DIR', os.path.join(DATA_DIR, "expenditure"))
+REVEN_DIR =os.getenv('REVEN_DIR', os.path.join(DATA_DIR, "revenue"))
+
 DATABASE_NAME = os.getenv('DATABASE_NAME', 'finance_db')
 DATABASE_HOST = os.getenv('DATABASE_HOST', 'localhost')
 DATABASE_PORT = os.getenv('DATABASE_PORT', 5432)
